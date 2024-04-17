@@ -37,8 +37,8 @@ public class RibbonDemo extends JPanel {
         playAnimation();
     }
 
-    private static long timeAt(long start) {
-        return System.currentTimeMillis() - start;
+    private static double secondsAt(double start) {
+        return (System.currentTimeMillis() - start) / 1000;
     }
 
     private void playAnimation() {
@@ -50,18 +50,12 @@ public class RibbonDemo extends JPanel {
             final double maxV = 600;//最大速率（pixel/s）
             final double deltaT = (double) delay / 1000;
             final double factor = 0.2;//摩擦系数
-            long tl0 = System.currentTimeMillis();//左加速时间（ms）
-            long tr0 = System.currentTimeMillis();//右加速时间（ms）
-            long tm0 = System.currentTimeMillis();//静止时间（ms）
-            double t;//时间（ms）
             double xl = x;//左位移（pixel）
             double xr = x;//右位移（pixel）
             double xm = x;//不位移（pixel）
             double v = 0;//速度（pixel/s）
             while (true) {
                 if (lMove && !rMove) {//仅按A键
-                    t = (double) timeAt(tl0) / 1000;//左加速时间（s）
-                    tr0 = tm0 = System.currentTimeMillis();
                     v -= a * deltaT;
                     if (v > maxV)
                         v = maxV;
@@ -69,8 +63,6 @@ public class RibbonDemo extends JPanel {
                         v = -maxV;
                     x = (int) (xr = xm = xl += v * deltaT);
                 } else if (rMove && !lMove) {//仅按D键
-                    t = (double) timeAt(tr0) / 1000;//右加速时间（s）
-                    tl0 = tm0 = System.currentTimeMillis();
                     v += a * deltaT;
                     if (v > maxV)
                         v = maxV;
@@ -78,8 +70,6 @@ public class RibbonDemo extends JPanel {
                         v = -maxV;
                     x = (int) (xl = xm = xr += v * deltaT);
                 } else {
-                    t = (double) timeAt(tm0) / 1000;//静止时间（s）
-                    tl0 = tr0 = System.currentTimeMillis();
                     if (v > factor)
                         v -= factor;
                     else if (v < -factor)
@@ -88,8 +78,8 @@ public class RibbonDemo extends JPanel {
                         v = 0;
                     x = (int) (xl = xr = xm += v * deltaT);
                 }
-                System.out.print("\rt: " + t + ",x: " + x + ",v: " + v);
 //                if (jump) ;
+                System.out.print("\rx: " + x + ",v: " + v);
                 repaint();
                 try {
                     Thread.sleep(delay);
