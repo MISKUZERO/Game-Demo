@@ -9,8 +9,8 @@ public class RibbonDemo extends JPanel {
     private final int width;
     private final Image bg;
     private int bX;
-    private int x;
-    private int y;
+    private volatile int x;
+    private volatile int y;
     private volatile boolean _xMove;
     private volatile boolean xMove;
     private volatile boolean _yMove;
@@ -38,28 +38,36 @@ public class RibbonDemo extends JPanel {
         playAnimation();
     }
 
+    private static long time(long start) {
+        return System.currentTimeMillis() - start;
+    }
+
     private void playAnimation() {
         new Thread(() -> {
-            int step = 1;
-            int lBound = 50;
-            int rBound = width - 100;
-            int blBound = width - 1600;
-            int brBound = 0;
+            final int lBound = 50, rBound = width - 100;//窗口边界
+            final int blBound = width - 1600, brBound = 0;//卷轴（背景图）边界
+            int v = 500;//速度（pixel/s）
+            long _x0 = x, x0 = x;
+            long _tx0 = System.currentTimeMillis(), tx0 = System.currentTimeMillis();
+            long _tx = 0, tx = 0;
             while (true) {
-                if (_xMove)
-                    if (x > lBound)
-                        x -= step;
-                    else if (bX < brBound)
-                        bX += step;
-                if (xMove)
-                    if (x < rBound)
-                        x += step;
-                    else if (bX > blBound)
-                        bX -= step;
-                if (_yMove)
-                    y -= step;
-                if (yMove)
-                    y += step;
+                System.out.print("\r_tx: " + _tx + ", tx: " + tx);
+                if (_xMove) {
+                    _tx = time(_tx0);
+                    x = (int) (_x0 - (double) v * _tx / 1000);
+                } else {
+                    _x0 = x;
+                    _tx0 = System.currentTimeMillis();
+                    _tx = 0;
+                }
+                if (xMove) {
+                    tx = time(tx0);
+                    x = (int) (x0 + (double) v * tx / 1000);
+                } else {
+                    x0 = x;
+                    tx0 = System.currentTimeMillis();
+                    tx = 0;
+                }
                 repaint();
                 try {
                     Thread.sleep(1);
