@@ -45,48 +45,50 @@ public class RibbonDemo extends JPanel {
         new Thread(() -> {
             final int lBound = 50, rBound = width - 100;//窗口边界
             final int blBound = width - 1600, brBound = 0;//卷轴（背景图）边界
-            final double a = 500;//加速度常量（pixel/s^2）
-            final double maxV = 500;//最大速率（pixel/s）
-            final long delay = 1;
+            final long delay = 1;//延迟（与帧率成反比）
+            final double a = 2000;//加速度常量（pixel/s^2）
+            final double maxV = 600;//最大速率（pixel/s）
             final double deltaT = (double) delay / 1000;
-            double v = 0;//速度（pixel/s）
+            final double factor = 0.2;//摩擦系数
             long tl0 = System.currentTimeMillis();//左加速时间（ms）
             long tr0 = System.currentTimeMillis();//右加速时间（ms）
+            long tm0 = System.currentTimeMillis();//静止时间（ms）
             double t;//时间（ms）
-            int xl = x;//左位移（pixel）
-            int xr = x;//右位移（pixel）
-            int xm = x;//不位移（pixel）
+            double xl = x;//左位移（pixel）
+            double xr = x;//右位移（pixel）
+            double xm = x;//不位移（pixel）
+            double v = 0;//速度（pixel/s）
             while (true) {
                 if (lMove && !rMove) {//仅按A键
                     t = (double) timeAt(tl0) / 1000;//左加速时间（s）
-                    tr0 = System.currentTimeMillis();
+                    tr0 = tm0 = System.currentTimeMillis();
                     v -= a * deltaT;
                     if (v > maxV)
                         v = maxV;
                     else if (v < -maxV)
                         v = -maxV;
-                    x = xr = xm = (int) (xl + v * t);
+                    x = (int) (xr = xm = xl += v * deltaT);
                 } else if (rMove && !lMove) {//仅按D键
                     t = (double) timeAt(tr0) / 1000;//右加速时间（s）
-                    tl0 = System.currentTimeMillis();
+                    tl0 = tm0 = System.currentTimeMillis();
                     v += a * deltaT;
                     if (v > maxV)
                         v = maxV;
                     else if (v < -maxV)
                         v = -maxV;
-                    x = xl = xm = (int) (xr + v * t);
+                    x = (int) (xl = xm = xr += v * deltaT);
                 } else {
+                    t = (double) timeAt(tm0) / 1000;//静止时间（s）
                     tl0 = tr0 = System.currentTimeMillis();
-//                    if (v > 1) {
-//                        v--;
-//                    } else if (v < -1) {
-//                        v++;
-//                    } else {
-                    v = 0;
-//                    }
-                    x = xl = xr = xm;
+                    if (v > factor)
+                        v -= factor;
+                    else if (v < -factor)
+                        v += factor;
+                    else
+                        v = 0;
+                    x = (int) (xl = xr = xm += v * deltaT);
                 }
-//                System.out.print("\rt: " + t + ",x: " + x + ",v: " + v);
+                System.out.print("\rt: " + t + ",x: " + x + ",v: " + v);
 //                if (jump) ;
                 repaint();
                 try {
