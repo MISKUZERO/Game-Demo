@@ -8,13 +8,12 @@ public class RibbonDemo extends JPanel {
     private final int height;
     private final int width;
     private final Image bg;
-    private int bX;
+    private volatile int xbg;//背景的横坐标
     private volatile int x;
     private volatile int y;
-    private volatile boolean _xMove;
-    private volatile boolean xMove;
-    private volatile boolean _yMove;
-    private volatile boolean yMove;
+    private volatile boolean lMove;
+    private volatile boolean rMove;
+    private volatile boolean jump;
 
     @Override
     public Dimension getPreferredSize() {
@@ -25,7 +24,7 @@ public class RibbonDemo extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(Color.WHITE);
-        g.drawImage(bg, bX, -height, this);
+        g.drawImage(bg, xbg, -height, this);
         g.drawRect(x, y, 50, 50);
     }
 
@@ -38,7 +37,7 @@ public class RibbonDemo extends JPanel {
         playAnimation();
     }
 
-    private static long time(long start) {
+    private static long timeAt(long start) {
         return System.currentTimeMillis() - start;
     }
 
@@ -46,28 +45,33 @@ public class RibbonDemo extends JPanel {
         new Thread(() -> {
             final int lBound = 50, rBound = width - 100;//窗口边界
             final int blBound = width - 1600, brBound = 0;//卷轴（背景图）边界
-            int v = 500;//速度（pixel/s）
-            long _x0 = x, x0 = x;
-            long _tx0 = System.currentTimeMillis(), tx0 = System.currentTimeMillis();
-            long _tx = 0, tx = 0;
+            final double A = 5;//加速度常量（pixel/s^2）
+            long t0 = System.currentTimeMillis();//系统时间（ms）
+            int x = this.x;//位移（pixel）
+            double v = 0;//速度（pixel/s）
+            double a;//加速度（pixel/s^2）
             while (true) {
-                System.out.print("\r_tx: " + _tx + ", tx: " + tx);
-                if (_xMove) {
-                    _tx = time(_tx0);
-                    x = (int) (_x0 - (double) v * _tx / 1000);
-                } else {
-                    _x0 = x;
-                    _tx0 = System.currentTimeMillis();
-                    _tx = 0;
+                double t = (double) timeAt(t0) / 1000;//运动时间（s）
+                if (lMove && !rMove)//仅按A键
+                    a = -A;
+                else if (rMove && !lMove)//仅按D键
+                    a = A;
+                else {
+                    t0 = System.currentTimeMillis();
+                    x = this.x;
+//                    if (v > 1)
+//                        v--;
+//                    else if (v < -1)
+//                        v++;
+//                    else
+                    v = 0;
+                    a = 0;
                 }
-                if (xMove) {
-                    tx = time(tx0);
-                    x = (int) (x0 + (double) v * tx / 1000);
-                } else {
-                    x0 = x;
-                    tx0 = System.currentTimeMillis();
-                    tx = 0;
-                }
+                if (t < 0.5)//加速时长
+                    v = v + a * t;
+                this.x = (int) (x + v * t);
+                System.out.print("\rt: " + t + ",x: " + this.x + ",v: " + v + ",a: " + a);
+//                if (jump) ;
                 repaint();
                 try {
                     Thread.sleep(1);
@@ -88,26 +92,22 @@ public class RibbonDemo extends JPanel {
             public void keyPressed(KeyEvent e) {
                 int keyCode = e.getKeyCode();
                 if (keyCode == KeyEvent.VK_A)
-                    _xMove = true;
+                    lMove = true;
                 else if (keyCode == KeyEvent.VK_D)
-                    xMove = true;
-                else if (keyCode == KeyEvent.VK_W)
-                    _yMove = true;
-                else if (keyCode == KeyEvent.VK_S)
-                    yMove = true;
+                    rMove = true;
+                else if (keyCode == KeyEvent.VK_SPACE)
+                    jump = true;
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
                 int keyCode = e.getKeyCode();
                 if (keyCode == KeyEvent.VK_A)
-                    _xMove = false;
+                    lMove = false;
                 else if (keyCode == KeyEvent.VK_D)
-                    xMove = false;
-                else if (keyCode == KeyEvent.VK_W)
-                    _yMove = false;
-                else if (keyCode == KeyEvent.VK_S)
-                    yMove = false;
+                    rMove = false;
+                else if (keyCode == KeyEvent.VK_SPACE)
+                    jump = false;
             }
         });
         frame.pack();
