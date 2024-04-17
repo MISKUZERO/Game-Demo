@@ -52,7 +52,6 @@ public class RibbonDemo extends JPanel {
             double v = 0;//速度（pixel/s）
             long tl0 = System.currentTimeMillis();//左加速时间（ms）
             long tr0 = System.currentTimeMillis();//右加速时间（ms）
-            long tm0 = System.currentTimeMillis();//静止时间（ms）
             double t;//时间（ms）
             int xl = x;//左位移（pixel）
             int xr = x;//右位移（pixel）
@@ -60,7 +59,7 @@ public class RibbonDemo extends JPanel {
             while (true) {
                 if (lMove && !rMove) {//仅按A键
                     t = (double) timeAt(tl0) / 1000;//左加速时间（s）
-                    tr0 = tm0 = System.currentTimeMillis();
+                    tr0 = System.currentTimeMillis();
                     v -= a * deltaT;
                     if (v > maxV)
                         v = maxV;
@@ -69,7 +68,7 @@ public class RibbonDemo extends JPanel {
                     x = xr = xm = (int) (xl + v * t);
                 } else if (rMove && !lMove) {//仅按D键
                     t = (double) timeAt(tr0) / 1000;//右加速时间（s）
-                    tl0 = tm0 = System.currentTimeMillis();
+                    tl0 = System.currentTimeMillis();
                     v += a * deltaT;
                     if (v > maxV)
                         v = maxV;
@@ -77,18 +76,17 @@ public class RibbonDemo extends JPanel {
                         v = -maxV;
                     x = xl = xm = (int) (xr + v * t);
                 } else {
-                    t = (double) timeAt(tm0) / 1000;//静止时间（s）
                     tl0 = tr0 = System.currentTimeMillis();
-                    if (v > 1) {
-                        v--;
-                    } else if (v < -1) {
-                        v++;
-                    } else {
-                        v = 0;
-                    }
-                    x = xl = xr = (int) (xm + v * t);
+//                    if (v > 1) {
+//                        v--;
+//                    } else if (v < -1) {
+//                        v++;
+//                    } else {
+                    v = 0;
+//                    }
+                    x = xl = xr = xm;
                 }
-                System.out.print("\rt: " + t + ",x: " + x + ",v: " + v);
+//                System.out.print("\rt: " + t + ",x: " + x + ",v: " + v);
 //                if (jump) ;
                 repaint();
                 try {
