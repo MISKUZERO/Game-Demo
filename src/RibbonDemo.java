@@ -45,36 +45,54 @@ public class RibbonDemo extends JPanel {
         new Thread(() -> {
             final int lBound = 50, rBound = width - 100;//窗口边界
             final int blBound = width - 1600, brBound = 0;//卷轴（背景图）边界
-            final double A = 5;//加速度常量（pixel/s^2）
-            long t0 = System.currentTimeMillis();//系统时间（ms）
-            int x = this.x;//位移（pixel）
+            final double a = 500;//加速度常量（pixel/s^2）
+            final double maxV = 500;//最大速率（pixel/s）
+            final long delay = 1;
+            final double deltaT = (double) delay / 1000;
             double v = 0;//速度（pixel/s）
-            double a;//加速度（pixel/s^2）
+            long tl0 = System.currentTimeMillis();//左加速时间（ms）
+            long tr0 = System.currentTimeMillis();//右加速时间（ms）
+            long tm0 = System.currentTimeMillis();//静止时间（ms）
+            double t;//时间（ms）
+            int xl = x;//左位移（pixel）
+            int xr = x;//右位移（pixel）
+            int xm = x;//不位移（pixel）
             while (true) {
-                double t = (double) timeAt(t0) / 1000;//运动时间（s）
-                if (lMove && !rMove)//仅按A键
-                    a = -A;
-                else if (rMove && !lMove)//仅按D键
-                    a = A;
-                else {
-                    t0 = System.currentTimeMillis();
-                    x = this.x;
-//                    if (v > 1)
-//                        v--;
-//                    else if (v < -1)
-//                        v++;
-//                    else
-                    v = 0;
-                    a = 0;
+                if (lMove && !rMove) {//仅按A键
+                    t = (double) timeAt(tl0) / 1000;//左加速时间（s）
+                    tr0 = tm0 = System.currentTimeMillis();
+                    v -= a * deltaT;
+                    if (v > maxV)
+                        v = maxV;
+                    else if (v < -maxV)
+                        v = -maxV;
+                    x = xr = xm = (int) (xl + v * t);
+                } else if (rMove && !lMove) {//仅按D键
+                    t = (double) timeAt(tr0) / 1000;//右加速时间（s）
+                    tl0 = tm0 = System.currentTimeMillis();
+                    v += a * deltaT;
+                    if (v > maxV)
+                        v = maxV;
+                    else if (v < -maxV)
+                        v = -maxV;
+                    x = xl = xm = (int) (xr + v * t);
+                } else {
+                    t = (double) timeAt(tm0) / 1000;//静止时间（s）
+                    tl0 = tr0 = System.currentTimeMillis();
+                    if (v > 1) {
+                        v--;
+                    } else if (v < -1) {
+                        v++;
+                    } else {
+                        v = 0;
+                    }
+                    x = xl = xr = (int) (xm + v * t);
                 }
-                if (t < 0.5)//加速时长
-                    v = v + a * t;
-                this.x = (int) (x + v * t);
-                System.out.print("\rt: " + t + ",x: " + this.x + ",v: " + v + ",a: " + a);
+                System.out.print("\rt: " + t + ",x: " + x + ",v: " + v);
 //                if (jump) ;
                 repaint();
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(delay);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
