@@ -76,4 +76,11 @@ public abstract class RectActor extends RectUnit implements Sprite {
         this.vy = vy;
     }
 
+    @Override
+    public String toString() {
+        return "RectActor{" +
+                "vx=" + vx +
+                ", vy=" + vy +
+                "} " + super.toString();
+    }
 }

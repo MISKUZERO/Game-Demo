@@ -64,4 +64,11 @@ public abstract class RectUnit implements Unit {
         this.y = y;
     }
 
+    @Override
+    public String toString() {
+        return "RectUnit{" +
+                "x=" + x +
+                ", y=" + y +
+                '}';
+    }
 }
