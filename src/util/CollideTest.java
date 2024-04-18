@@ -1,6 +1,6 @@
 package util;
 
-import component.RectActor;
+import component.RectUnit;
 
 public class CollideTest {
 
@@ -9,8 +9,7 @@ public class CollideTest {
         return x1 <= x4 && x3 <= x2 && y2 <= y3 && y4 <= y1;
     }
 
-
-    public static boolean isCollide(RectActor a1, RectActor a2) {
+    public static boolean isCollide(RectUnit a1, RectUnit a2) {
         int a1X = a1.getX();
         int a1Y = a1.getY();
         int a2X = a2.getX();

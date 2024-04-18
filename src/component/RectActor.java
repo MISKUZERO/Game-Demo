@@ -1,62 +1,79 @@
 package component;
 
-public abstract class RectActor implements Sprite {
+public abstract class RectActor extends RectUnit implements Sprite {
 
-    private int height;
-    private int width;
-    //左上角坐标
-    private int x;
-    private int y;
+    double xl;//左位移记录（pixel）
+    double xr;//右位移记录（pixel）
+    double xm;//保持位移记录（pixel）
+    double yh;//高度位移记录（pixel）
+
+    double vx;//x方向速度（pixel/s）
+    double vy;//y方向速度（pixel/s）
 
     public RectActor() {
-        this(20, 35);
     }
 
-    public RectActor(int height, int width) {
-        this(height, width, 0, 0);
+    public RectActor(int width, int height, int x, int y) {
+        super(width, height, x, y);
+        xl = xr = xm = x;
+        yh = y;
     }
 
-    public RectActor(int height, int width, int x, int y) {
-        this.height = height;
-        this.width = width;
-        this.x = x;
-        this.y = y;
+    public double getXl() {
+        return xl;
     }
 
-    public int getHeight() {
-        return height;
+    public void setXl(double xl) {
+        this.xl = xl;
     }
 
-    public void setHeight(int height) {
-        this.height = height;
+    public double getXr() {
+        return xr;
     }
 
-    public int getWidth() {
-        return width;
+    public void setXr(double xr) {
+        this.xr = xr;
     }
 
-    public void setWidth(int width) {
-        this.width = width;
+    public double getXm() {
+        return xm;
     }
 
-    public int getX() {
-        return x;
+    public void setXm(double xm) {
+        this.xm = xm;
     }
 
-    public void setX(int x) {
-        this.x = x;
+    public double getYh() {
+        return yh;
     }
 
-    public int getY() {
-        return y;
+    public void setYh(double yh) {
+        this.yh = yh;
     }
 
-    public void setY(int y) {
-        this.y = y;
+    public double getVx() {
+        return vx;
     }
 
-    public void setXAndY(int x, int y) {
-        this.x = x;
-        this.y = y;
+    public void setVx(double vx) {
+        this.vx = vx;
     }
+
+    public double getVy() {
+        return vy;
+    }
+
+    public void setVy(double vy) {
+        this.vy = vy;
+    }
+
+    public void setArgs(double xl, double xr, double xm, double yh, double vx, double vy) {
+        this.xl = xl;
+        this.xr = xr;
+        this.xm = xm;
+        this.yh = yh;
+        this.vx = vx;
+        this.vy = vy;
+    }
+
 }
