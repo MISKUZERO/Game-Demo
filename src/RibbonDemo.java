@@ -8,7 +8,9 @@ public class RibbonDemo extends JPanel {
     private final int height;
     private final int width;
     private final Image bg;
-    private volatile int xbg;//背景的横坐标
+
+    private final int delay = 1;//帧生成延迟（与帧率成反比）
+
     private volatile int x;
     private volatile int y;
     private volatile boolean lMove;
@@ -23,7 +25,7 @@ public class RibbonDemo extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.drawImage(bg, xbg, -height, this);
+        g.drawImage(bg, 0, -height, this);
         g.setColor(Color.YELLOW);
         g.drawRect(x, y, 20, 35);
     }
@@ -34,77 +36,78 @@ public class RibbonDemo extends JPanel {
         x = 100;
         y = height - 68;
         bg = getToolkit().createImage("E:\\我的收藏\\美图\\wallhaven-8ogjek.jpg");
-        playAnimation();
     }
 
     private void playAnimation() {
         new Thread(() -> {
-            final int lBound = 50, rBound = width - 100;//窗口边界
-            final int blBound = width - 1600, brBound = 0;//卷轴（背景图）边界
-            final int dBound = y;//下边界
-            final long delay = 1;//延迟（与帧率成反比）
-            final double g = 10000;//重力加速度（pixel/s^2）
-            final double a = 2000;//右移动加速度（pixel/s^2）
+            final int ground = y;//地面高度
+            final double deltaT = (double) delay / 1000;//时间间隔（s）
+            final double friction = 0.2;//摩擦系数
+            final double gravity = 10000;//重力加速度（pixel/s^2）
+            final double acceleration = 2000;//（右）奔跑加速度（pixel/s^2）
+            final double vRunMax = 500;//最大奔跑速率（pixel/s）
             final double vJump = -2000;//跳跃速度（pixel/s）
-            final double vxMax = 500;//最大速率（pixel/s）
-            final double deltaT = (double) delay / 1000;
-            final double factor = 0.2;//摩擦系数
-            double xl = x;//左位移（pixel）
-            double xr = x;//右位移（pixel）
-            double xm = x;//不位移（pixel）
-            double y = dBound;//高度位移（pixel）
-            double vx = 0;//x速度（pixel/s）
-            double vy = -vJump;//y速度（pixel/s）
+
+            double xl = x;//左位移记录（pixel）
+            double xr = x;//右位移记录（pixel）
+            double xm = x;//保持位移记录（pixel）
+            double y = ground;//高度位移记录（pixel）
+            double vx = 0;//x方向速度（pixel/s）
+            double vy = -vJump;//y方向速度（pixel/s）
             while (true) {
                 //确定横向参数
                 if (lMove && !rMove) {//仅按A键
-                    if (this.y == dBound) {//在地上
-                        vx -= a * deltaT;
-                        if (vx > vxMax)
-                            vx = vxMax;
-                        else if (vx < -vxMax)
-                            vx = -vxMax;
+                    if (this.y == ground) {//在地上
+                        vx -= acceleration * deltaT;
+                        if (vx > vRunMax)
+                            vx = vRunMax;
+                        else if (vx < -vRunMax)
+                            vx = -vRunMax;
                     }
                     x = (int) (xr = xm = xl += vx * deltaT);
                 } else if (rMove && !lMove) {//仅按D键
-                    if (this.y == dBound) {//在地上
-                        vx += a * deltaT;
-                        if (vx > vxMax)
-                            vx = vxMax;
-                        else if (vx < -vxMax)
-                            vx = -vxMax;
+                    if (this.y == ground) {//在地上
+                        vx += acceleration * deltaT;
+                        if (vx > vRunMax)
+                            vx = vRunMax;
+                        else if (vx < -vRunMax)
+                            vx = -vRunMax;
                     }
                     x = (int) (xl = xm = xr += vx * deltaT);
                 } else {
-                    if (vx > factor)
-                        vx -= factor;
-                    else if (vx < -factor)
-                        vx += factor;
+                    if (vx > friction)
+                        vx -= friction;
+                    else if (vx < -friction)
+                        vx += friction;
                     else
                         vx = 0;
                     x = (int) (xl = xr = xm += vx * deltaT);
                 }
                 //确定纵向参数
-                if (this.y == dBound) {//在地上
+                if (this.y == ground) {//在地上
                     if (jump)
                         vy = vJump;
                 } else
-                    vy += g * deltaT;
+                    vy += gravity * deltaT;
                 y += vy * deltaT;
-                if (y > dBound)
-                    y = dBound;
+                if (y > ground)
+                    y = ground;
                 this.y = (int) y;
                 //调试
                 System.out.print("\rx: " + x + ", y: " + this.y + ", vx: " + vx + ", vy: " + vy);
                 //渲染
-                repaint();
-                try {
-                    Thread.sleep(delay);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                render();
             }
         }).start();
+    }
+
+    private void render() {
+        repaint();
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void start() {
@@ -138,6 +141,7 @@ public class RibbonDemo extends JPanel {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+        playAnimation();
     }
 
 
