@@ -41,9 +41,9 @@ public class Frame extends JPanel {
         height = 600;
         width = 800;
         bg = getToolkit().createImage("E:\\我的收藏\\美图\\wallhaven-8ogjek.jpg");
-        actor1 = new RectActor(20, 35, 100, 200) {
+        actor1 = new RectActor(20, 35, 100, 0, 60) {
         };
-        actor2 = new RectActor(20, 35, 500, 0) {
+        actor2 = new RectActor(30, 35, 500, 0, 50) {
         };
         argsController = new Reality();
     }
