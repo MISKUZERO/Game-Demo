@@ -4,8 +4,8 @@ import component.RectActor;
 
 public interface ArgsController {
 
-    void updateRole(RectActor actor, boolean lMove, boolean rMove, boolean jump);
+    void updateControllable(RectActor actor,  boolean... signals);
 
-    void updateLifeless(RectActor actor);
+    void updateUncontrollable(RectActor actor);
 
 }

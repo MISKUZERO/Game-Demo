@@ -1,6 +1,7 @@
 import component.RectActor;
 import controller.ArgsController;
 import controller.Reality;
+import util.CollideTest;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +41,7 @@ public class Frame extends JPanel {
         height = 600;
         width = 800;
         bg = getToolkit().createImage("E:\\我的收藏\\美图\\wallhaven-8ogjek.jpg");
-        actor1 = new RectActor(20, 35, 100, 100) {
+        actor1 = new RectActor(20, 35, 100, 200) {
         };
         actor2 = new RectActor(20, 35, 500, 0) {
         };
@@ -48,16 +49,16 @@ public class Frame extends JPanel {
     }
 
     private static void drawActorBox(Graphics g, RectActor actor) {
-        g.drawRect(actor.getX(), actor.getY(), actor.getWidth(), actor.getHeight());
+        g.drawRect((int) actor.getX(), (int) actor.getY(), actor.getWidth(), actor.getHeight());
     }
 
 
     private void playAnimation(RectActor... actors) {
         new Thread(() -> {
             while (true) {
-                argsController.updateRole(actors[0], lMove, rMove, jump);
+                argsController.updateControllable(actors[0], lMove, rMove, jump);
                 for (int i = 1; i < actors.length; i++)
-                    argsController.updateLifeless(actors[i]);
+                    argsController.updateUncontrollable(actors[i]);
                 render();
             }
         }).start();

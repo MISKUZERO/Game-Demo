@@ -17,10 +17,10 @@ public class CollideTest {
     }
 
     public static boolean isColliding(RectUnit a1, RectUnit a2) {
-        int a1X = a1.getX();
-        int a1Y = a1.getY();
-        int a2X = a2.getX();
-        int a2Y = a2.getY();
+        int a1X = (int) a1.getX();
+        int a1Y = (int) a1.getY();
+        int a2X = (int) a2.getX();
+        int a2Y = (int) a2.getY();
         return _isColliding(a1X, a1Y, a1X + a1.getWidth(), a1Y + a1.getHeight(),
                 a2X, a2Y, a2X + a2.getWidth(), a2Y + a2.getHeight());
     }

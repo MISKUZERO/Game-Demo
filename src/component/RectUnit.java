@@ -5,8 +5,8 @@ public abstract class RectUnit implements Unit {
     private int width;
     private int height;
     //左上角坐标
-    private int x;
-    private int y;
+    private double x;
+    private double y;
 
     public RectUnit() {
     }
@@ -16,7 +16,7 @@ public abstract class RectUnit implements Unit {
         this.height = height;
     }
 
-    public RectUnit(int width, int height, int x, int y) {
+    public RectUnit(int width, int height, double x, double y) {
         this(width, height);
         this.x = x;
         this.y = y;
@@ -38,19 +38,19 @@ public abstract class RectUnit implements Unit {
         this.width = width;
     }
 
-    public int getX() {
+    public double getX() {
         return x;
     }
 
-    public void setX(int x) {
+    public void setX(double x) {
         this.x = x;
     }
 
-    public final int getY() {
+    public final double getY() {
         return y;
     }
 
-    public void setY(int y) {
+    public void setY(double y) {
         this.y = y;
     }
 
@@ -59,7 +59,7 @@ public abstract class RectUnit implements Unit {
         this.height = height;
     }
 
-    public void setXAndY(int x, int y) {
+    public void setXAndY(double x, double y) {
         this.x = x;
         this.y = y;
     }

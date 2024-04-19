@@ -87,80 +87,55 @@ public class Reality implements ArgsController {
     }
 
     @Override
-    public void updateRole(RectActor actor, boolean lMove, boolean rMove, boolean jump) {
+    public void updateControllable(RectActor actor, boolean... signals) {
+        boolean lMove = signals[0], rMove = signals[1], jump = signals[2];//控制信号
+        double y = actor.getY();
         int ground = 600 - 68;//地面高度
-        //确定横向参数
-        if (lMove && !rMove) {//仅按A键
-            if (actor.getY() == ground) { //在地上
+        boolean onGround = y == ground;//在地上
+        //1.确定横向参数
+        if (onGround) {
+            if (lMove && !rMove) {//仅按A键
                 actor.setVx(actor.getVx() - a * dT);
                 if (actor.getVx() < -vRMax)
                     actor.setVx(-vRMax);
-            }
-            double xl = actor.getXl() + actor.getVx() * dT;
-            actor.setXl(xl);
-            actor.setXr(xl);
-            actor.setXm(xl);
-            actor.setX((int) xl);
-        } else if (rMove && !lMove) {//仅按D键
-            if (actor.getY() == ground) {//在地上
+            } else if (rMove && !lMove) {//仅按D键
                 actor.setVx(actor.getVx() + a * dT);
                 if (actor.getVx() > vRMax)
                     actor.setVx(vRMax);
+            } else {
+                double vx = actor.getVx();
+                if (vx > m)
+                    actor.setVx(actor.getVx() - m);
+                else if (vx < -m)
+                    actor.setVx(actor.getVx() + m);
+                else
+                    actor.setVx(0);
             }
-            double xr = actor.getXr() + actor.getVx() * dT;
-            actor.setXl(xr);
-            actor.setXr(xr);
-            actor.setXm(xr);
-            actor.setX((int) xr);
-        } else {
-            double vx = actor.getVx();
-            if (vx > m)
-                actor.setVx(actor.getVx() - m);
-            else if (vx < -m)
-                actor.setVx(actor.getVx() + m);
-            else
-                actor.setVx(0);
-            double xm = actor.getXm() + actor.getVx() * dT;
-            actor.setXl(xm);
-            actor.setXr(xm);
-            actor.setXm(xm);
-            actor.setX((int) xm);
         }
-        //确定纵向参数
-        if (actor.getY() == ground) {//在地上
+        actor.setX(actor.getX() + actor.getVx() * dT);//  **更新x方向位置**
+        //2.确定纵向参数
+        if (onGround) {
             if (jump)
                 actor.setVy(vJ);
         } else
             actor.setVy(actor.getVy() + g * dT);
-        actor.setYh(actor.getYh() + actor.getVy() * dT);
-        if (actor.getYh() > ground)
-            actor.setYh(ground);
-        actor.setY((int) actor.getYh());
+        actor.setY(y + actor.getVy() * dT);//             **更新y方向位置**
+        if (actor.getY() > ground)//保证不会陷入地下
+            actor.setY(ground);
     }
 
     @Override
-    public void updateLifeless(RectActor actor) {
+    public void updateUncontrollable(RectActor actor) {
+        double y = actor.getY();
         int ground = 600 - 68;//地面高度
-        //确定横向参数
-//        if (false) {
-//            if (actor.getY() == ground) { //在地上
-//                actor.setVx(actor.getVx() - a * dT);
-//                if (actor.getVx() < -vRMax)
-//                    actor.setVx(-vRMax);
-//            }
-//            double xl = actor.getXl() + actor.getVx() * dT;
-//            actor.setXl(xl);
-//            actor.setXr(xl);
-//            actor.setXm(xl);
-//            actor.setX((int) xl);
-//        }
-        //确定纵向参数
-        if (actor.getY() != ground) //在空中
+        boolean onGround = y == ground;//在地上
+        // TODO: 2024/4/19   1.确定横向参数
+        //2.确定纵向参数
+        if (!onGround) //在空中
             actor.setVy(actor.getVy() + g * dT);
-        actor.setYh(actor.getYh() + actor.getVy() * dT);
-        if (actor.getYh() > ground)
-            actor.setYh(ground);
-        actor.setY((int) actor.getYh());
+        actor.setY(y + actor.getVy() * dT);//             **更新y方向位置**
+        if (actor.getY() > ground)//保证不会陷入地下
+            actor.setY(ground);
     }
 
 }
