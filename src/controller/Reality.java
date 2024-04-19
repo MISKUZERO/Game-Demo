@@ -1,8 +1,10 @@
 package controller;
 
-import component.RectActor;
+import component.RectSprite;
+import component.RectUnit;
+import util.CollideTest;
 
-public class Reality implements ArgsController {
+public class Reality implements RectArgsController {
 
     private double dT;//时间间隔（s）
     private double m;//摩擦系数
@@ -86,121 +88,152 @@ public class Reality implements ArgsController {
         this.vJ = vJ;
     }
 
+    int ground = 500;//地面高度
+
     @Override
-    public void updateControllable(RectActor actor, boolean... signals) {
+    public void updateControllable(RectSprite sprite, boolean... signals) {
         boolean lMove = signals[0], rMove = signals[1], jump = signals[2];//控制信号
         double dT = this.dT;
         double c = this.c;
-        double y = actor.getY();
-        int ground = 600 - 68;//地面高度
-        boolean onGround = y == ground;//在地上
-        //1.确定横向参数
+        boolean onGround = sprite.getDiagonalY() == ground;//在地上
+        //1.更新x方向上速度和位置
         if (onGround) {
             if (lMove && !rMove) {//左移动
-                actor.setVx(actor.getVx() - a * dT);
+                sprite.setVx(sprite.getVx() - a * dT);
                 double vRMax = -this.vRMax;
-                if (actor.getVx() < vRMax)
-                    actor.setVx(vRMax);
+                if (sprite.getVx() < vRMax)
+                    sprite.setVx(vRMax);
             } else if (rMove && !lMove) {//右移动
-                actor.setVx(actor.getVx() + a * dT);
+                sprite.setVx(sprite.getVx() + a * dT);
                 double vRMax = this.vRMax;
-                if (actor.getVx() > vRMax)
-                    actor.setVx(vRMax);
+                if (sprite.getVx() > vRMax)
+                    sprite.setVx(vRMax);
             } else {
-                double vx = actor.getVx();
+                double vx = sprite.getVx();
                 double m = this.m;
                 if (vx > m)
-                    actor.setVx(actor.getVx() - m);
+                    sprite.setVx(sprite.getVx() - m);
                 else if (vx < -m)
-                    actor.setVx(actor.getVx() + m);
+                    sprite.setVx(sprite.getVx() + m);
                 else
-                    actor.setVx(0);
+                    sprite.setVx(0);
             }
         }
-        updateVxInFluid(actor, c, dT);
-        actor.setX(actor.getX() + actor.getVx() * dT);//  **更新x方向位置**
-        //2.确定纵向参数
+        updateVxInFluid(sprite, c, dT);
+        sprite.setX(sprite.getExactX() + sprite.getVx() * dT);//  **更新x方向位置**
+        //2.更新y方向上速度和位置
         if (onGround) {
             if (jump)
-                actor.setVy(vJ);
+                sprite.setVy(vJ);
             else
-                actor.setVy(0);
+                sprite.setVy(0);
         } else {
-            actor.setVy(actor.getVy() + g * dT);
-            updateVyInFluid(actor, c, dT);
+            sprite.setVy(sprite.getVy() + g * dT);
+            updateVyInFluid(sprite, c, dT);
         }
-        actor.setY(y + actor.getVy() * dT);//             **更新y方向位置**
-        if (actor.getY() > ground)//保证不会陷入地下
-            actor.setY(ground);
-        System.out.print("\r" + actor);
+        sprite.setY(sprite.getExactY() + sprite.getVy() * dT);//  **更新y方向位置**
+        if (sprite.getDiagonalY() > ground)//保证不会陷入地下
+            sprite.setY(ground - sprite.getHeight());
+        System.out.print("\r" + sprite);
     }
 
     @Override
-    public void updateUncontrollable(RectActor actor) {
+    public void updateUncontrollable(RectSprite sprite) {
         double dT = this.dT;
         double c = this.c;
-        double y = actor.getY();
-        int ground = 600 - 68;//地面高度
-        boolean onGround = y == ground;//在地上
-        //1.确定横向参数
+        boolean onGround = sprite.getDiagonalY() == ground;//在地上
+        //1.更新x方向上速度和位置
         if (onGround) {
-            double vx = actor.getVx();
+            double vx = sprite.getVx();
             double m = this.m;
             if (vx > m)
-                actor.setVx(actor.getVx() - m);
+                sprite.setVx(sprite.getVx() - m);
             else if (vx < -m)
-                actor.setVx(actor.getVx() + m);
+                sprite.setVx(sprite.getVx() + m);
             else
-                actor.setVx(0);
+                sprite.setVx(0);
         }
-        updateVxInFluid(actor, c, dT);
-        actor.setX(actor.getX() + actor.getVx() * dT);//  **更新x方向位置**
-        //2.确定纵向参数
+        updateVxInFluid(sprite, c, dT);
+        sprite.setX(sprite.getExactX() + sprite.getVx() * dT);//  **更新x方向位置**
+        //2.更新y方向上速度和位置
         if (onGround) {
-            actor.setVy(0);
+            sprite.setVy(0);
         } else {
-            actor.setVy(actor.getVy() + g * dT);
-            updateVyInFluid(actor, c, dT);
+            sprite.setVy(sprite.getVy() + g * dT);
+            updateVyInFluid(sprite, c, dT);
         }
-        actor.setY(y + actor.getVy() * dT);//             **更新y方向位置**
-        if (actor.getY() > ground)//保证不会陷入地下
-            actor.setY(ground);
+        sprite.setY(sprite.getExactY() + sprite.getVy() * dT);//  **更新y方向位置**
+        if (sprite.getDiagonalY() > ground)//保证不会陷入地下
+            sprite.setY(ground - sprite.getHeight());
+    }
+
+    public void updateAllColliders(RectUnit... rectUnits) {
+        int len = rectUnits.length;
+        for (int i = 0; i < len; i++) {
+            RectUnit self = rectUnits[i];
+            if (self instanceof RectSprite s) {
+                s.setCollider(null);
+                for (int j = i + 1; j < len; j++) {
+                    RectUnit another = rectUnits[j];
+                    if (another instanceof RectSprite a) {
+                        if (CollideTest.isColliding(s, a)) {//精灵和精灵碰撞
+                            double m1 = s.getM(), m2 = a.getM();
+                            double vx1 = s.getVx(), vx2 = a.getVx();
+                            double vy1 = s.getVy(), vy2 = a.getVy();
+                            /*
+                             *  可能会数据溢出
+                             */
+                            double mAdd = m1 + m2;
+                            double p = (m1 - m2) / mAdd, q1 = 2 * m1 / mAdd, q2 = 2 * m2 / mAdd;
+                            s.setVxAndVy(p * vx1 + q2 * vx2, p * vy1 + q2 * vy2);
+                            a.setVxAndVy(q1 * vx1 - p * vx2, q1 * vy1 - p * vy2);
+                            if (s.getCollider() == null)
+                                s.setCollider(a);
+                        }
+                    } else {
+                        if (CollideTest.isColliding(s, another)) {//精灵和固定物碰撞
+                            s.setVxAndVy(-s.getVx(), -s.getVy());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
      * 更新物体在流体中的速度（x方向）。
      * <b>注意：可能会存在数据溢出的情况（几乎不会）！</b>
      *
-     * @param actor 受流体阻力影响的对象
-     * @param c     阻力系数
-     * @param dT    时间更新间隔
+     * @param sprite 受流体阻力影响的对象
+     * @param c      阻力系数
+     * @param dT     时间更新间隔
      */
-    public static void updateVxInFluid(RectActor actor, double c, double dT) {
-        double v = actor.getVx();
-        //阻力：f := c * sx * v^2 == m * a   =>   加速度：a == c * sx * v^2 / m; sx := actor.height
-        double a = c * v / actor.getM() * v * actor.getHeight();//可能数据会溢出
+    public static void updateVxInFluid(RectSprite sprite, double c, double dT) {
+        double v = sprite.getVx();
+        //阻力：f := c * sx * v^2 == m * a   =>   加速度：a == c * sx * v^2 / m; sx := sprite.height
+        double a = c * v / sprite.getM() * v * sprite.getHeight();//可能数据会溢出
         if (v > 0)
-            actor.setVx(actor.getVx() - a * dT);
+            sprite.setVx(sprite.getVx() - a * dT);
         else
-            actor.setVx(actor.getVx() + a * dT);
+            sprite.setVx(sprite.getVx() + a * dT);
     }
 
     /**
      * 更新物体在流体中的速度（y方向）。
      * <b>注意：可能会存在数据溢出的情况（几乎不会）！</b>
      *
-     * @param actor 受流体阻力影响的对象
-     * @param c     阻力系数
-     * @param dT    时间更新间隔
+     * @param sprite 受流体阻力影响的对象
+     * @param c      阻力系数
+     * @param dT     时间更新间隔
      */
-    public static void updateVyInFluid(RectActor actor, double c, double dT) {
-        double v = actor.getVy();
-        //阻力：f := c * sy * v^2 == m * a   =>   加速度：a == c * sy * v^2 / m; sy := actor.width
-        double a = c * v / actor.getM() * v * actor.getWidth();//可能数据会溢出
+    public static void updateVyInFluid(RectSprite sprite, double c, double dT) {
+        double v = sprite.getVy();
+        //阻力：f := c * sy * v^2 == m * a   =>   加速度：a == c * sy * v^2 / m; sy := sprite.width
+        double a = c * v / sprite.getM() * v * sprite.getWidth();//可能数据会溢出
         if (v > 0)
-            actor.setVy(actor.getVy() - a * dT);
+            sprite.setVy(sprite.getVy() - a * dT);
         else
-            actor.setVy(actor.getVy() + a * dT);
+            sprite.setVy(sprite.getVy() + a * dT);
     }
 
 }
