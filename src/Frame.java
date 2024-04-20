@@ -58,13 +58,19 @@ public class Frame extends JPanel {
     }
 
 
-    private void playAnimation(RectSprite... sprites) {
+    private void playAnimation() {
         new Thread(() -> {
+            final RectSprite hero = this.hero;
+            final RectSprite sprite1 = this.sprite1;
+            final RectSprite sprite2 = this.sprite2;
+            final RectSprite sprite3 = this.sprite3;
+            final Reality reality = this.reality;
             while (true) {
                 reality.updateControllable(hero, lMove, rMove, jump);
-                for (int i = 1; i < sprites.length; i++)
-                    reality.updateUncontrollable(sprites[i]);
-                reality.updateAllColliders(sprites);
+                reality.updateUncontrollable(sprite1);
+                reality.updateUncontrollable(sprite2);
+                reality.updateUncontrollable(sprite3);
+                Reality.updateAllColliders(hero, sprite1, sprite2, sprite3);
                 render();
             }
         }).start();
@@ -111,7 +117,7 @@ public class Frame extends JPanel {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-        playAnimation(hero, sprite1, sprite2, sprite3);
+        playAnimation();
     }
 
 

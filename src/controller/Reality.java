@@ -167,37 +167,56 @@ public class Reality implements RectArgsController {
             sprite.setY(ground - sprite.getHeight());
     }
 
-    public void updateAllColliders(RectUnit... rectUnits) {
+    public static void updateAllColliders(RectUnit... rectUnits) {
         int len = rectUnits.length;
         for (int i = 0; i < len; i++) {
             RectUnit self = rectUnits[i];
             if (self instanceof RectSprite s) {
-                s.setCollider(null);
                 for (int j = i + 1; j < len; j++) {
                     RectUnit another = rectUnits[j];
-                    if (another instanceof RectSprite a) {
-                        if (CollideTest.isColliding(s, a)) {//精灵和精灵碰撞
-                            double m1 = s.getM(), m2 = a.getM();
-                            double vx1 = s.getVx(), vx2 = a.getVx();
-                            double vy1 = s.getVy(), vy2 = a.getVy();
-                            /*
-                             *  可能会数据溢出
-                             */
-                            double mAdd = m1 + m2;
-                            double p = (m1 - m2) / mAdd, q1 = 2 * m1 / mAdd, q2 = 2 * m2 / mAdd;
-                            s.setVxAndVy(p * vx1 + q2 * vx2, p * vy1 + q2 * vy2);
-                            a.setVxAndVy(q1 * vx1 - p * vx2, q1 * vy1 - p * vy2);
-                            if (s.getCollider() == null)
+                    if (another instanceof RectSprite a) {//精灵和精灵碰撞检测
+                        RectSprite sCollider = s.getCollider();
+                        if (sCollider == null) {
+                            if (CollideTest.isColliding(s, a)) {
+                                updateVxAndVyAfterCollide(s, a, s.getM(), a.getM(),
+                                        s.getVx(), a.getVx(), s.getVy(), a.getVy());
                                 s.setCollider(a);
-                        }
-                    } else {
-                        if (CollideTest.isColliding(s, another)) {//精灵和固定物碰撞
-                            s.setVxAndVy(-s.getVx(), -s.getVy());
-                        }
-                    }
+                                break;
+                            }
+                        } else if (CollideTest.isColliding(s, sCollider)) {//卡进精灵内部了
+                            break;
+                        } else
+                            s.setCollider(null);
+                    } else if (CollideTest.isColliding(s, another))//精灵和固定物碰撞检测
+                        s.setVxAndVy(-s.getVx(), -s.getVy());
                 }
-            }
+            } else
+                for (int j = i + 1; j < len; j++)
+                    if (rectUnits[j] instanceof RectSprite a &&
+                            CollideTest.isColliding(self, a))//固定物和精灵碰撞检测
+                        a.setVxAndVy(-a.getVx(), -a.getVy());
         }
+    }
+
+    /**
+     * 更新物体碰撞后的速度。
+     * <b>注意：可能会存在数据溢出的情况！</b>
+     *
+     * @param s1  精灵1
+     * @param s2  精灵2
+     * @param m1  精灵1的质量
+     * @param m2  精灵2的质量
+     * @param vx1 精灵1的x方向上速度
+     * @param vx2 精灵2的x方向上速度
+     * @param vy1 精灵1的y方向上速度
+     * @param vy2 精灵2的y方向上速度
+     */
+    public static void updateVxAndVyAfterCollide(RectSprite s1, RectSprite s2, double m1, double m2,
+                                                 double vx1, double vx2, double vy1, double vy2) {
+        double mAdd = m1 + m2;
+        double p = (m1 - m2) / mAdd, q1 = 2 * m1 / mAdd, q2 = 2 * m2 / mAdd;
+        s1.setVxAndVy(p * vx1 + q2 * vx2, p * vy1 + q2 * vy2);
+        s2.setVxAndVy(q1 * vx1 - p * vx2, q1 * vy1 - p * vy2);
     }
 
     /**
