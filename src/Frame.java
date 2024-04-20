@@ -1,4 +1,5 @@
 import component.RectSprite;
+import component.RectUnit;
 import controller.Reality;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ public class Frame extends JPanel {
     private final int height;
     private final int width;
 
+    private final RectUnit ground;
     private final RectSprite hero;
     private final RectSprite sprite1;
     private final RectSprite sprite2;
@@ -31,17 +33,19 @@ public class Frame extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(Color.BLACK);
-        g.drawLine(0, 500, 2000, 500);
+        drawUnitBox(g, ground);
         g.setColor(Color.BLUE);
-        drawSpriteBox(g, hero);
-        drawSpriteBox(g, sprite1);
-        drawSpriteBox(g, sprite2);
-        drawSpriteBox(g, sprite3);
+        drawUnitBox(g, hero);
+        drawUnitBox(g, sprite1);
+        drawUnitBox(g, sprite2);
+        drawUnitBox(g, sprite3);
     }
 
     public Frame() {
         height = 600;
         width = 1800;
+        ground = new RectUnit(-500, 400, 2000, 500) {
+        };
         hero = new RectSprite(100, 0, 20, 50, 50) {
         };
         sprite1 = new RectSprite(200, 0, 30, 15, 60) {
@@ -53,13 +57,14 @@ public class Frame extends JPanel {
         reality = new Reality();
     }
 
-    private static void drawSpriteBox(Graphics g, RectSprite sprite) {
-        g.drawRect(sprite.getX(), sprite.getY(), sprite.getWidth(), sprite.getHeight());
+    private static void drawUnitBox(Graphics g, RectUnit unit) {
+        g.drawRect(unit.getX(), unit.getY(), unit.getWidth(), unit.getHeight());
     }
 
 
     private void playAnimation() {
         new Thread(() -> {
+            final RectUnit ground = this.ground;
             final RectSprite hero = this.hero;
             final RectSprite sprite1 = this.sprite1;
             final RectSprite sprite2 = this.sprite2;
@@ -70,7 +75,7 @@ public class Frame extends JPanel {
                 reality.updateUncontrollable(sprite1);
                 reality.updateUncontrollable(sprite2);
                 reality.updateUncontrollable(sprite3);
-                Reality.updateAllColliders(hero, sprite1, sprite2, sprite3);
+                Reality.updateAllColliders(ground, hero, sprite1, sprite2, sprite3);
                 render();
             }
         }).start();

@@ -183,7 +183,7 @@ public class Reality implements RectArgsController {
                                 s.setCollider(a);
                                 break;
                             }
-                        } else if (CollideTest.isColliding(s, sCollider)) {//卡进精灵内部了
+                        } else if (CollideTest.isColliding(s, sCollider)) {//精灵和精灵相交
                             break;
                         } else
                             s.setCollider(null);
