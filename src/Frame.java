@@ -48,7 +48,7 @@ public class Frame extends JPanel {
         };
         hero = new RectSprite(100, 0, 20, 50, 50) {
         };
-        sprite1 = new RectSprite(200, 0, 30, 15, 60) {
+        sprite1 = new RectSprite(200, 0, 300, 15, 60) {
         };
         sprite2 = new RectSprite(400, 0, 20, 60, 400) {
         };
@@ -75,7 +75,7 @@ public class Frame extends JPanel {
                 reality.updateUncontrollable(sprite1);
                 reality.updateUncontrollable(sprite2);
                 reality.updateUncontrollable(sprite3);
-                Reality.updateAllColliders(ground, hero, sprite1, sprite2, sprite3);
+                Reality.updateAllColliders(20, 5, 5, ground, hero, sprite1, sprite2, sprite3);
                 render();
             }
         }).start();

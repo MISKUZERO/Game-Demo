@@ -15,7 +15,7 @@ public class Reality implements RectArgsController {
     private double vJ;//跳跃速度（pixel/s）
 
     public Reality() {
-        this(0.001, 0.2, 0.001, 10000, 2000, 500, -2000);
+        this(0.001, 0.2, 0.001, 10000, 1000, 500, -2000);
     }
 
     public Reality(double a, double vRMax, double vJ) {
@@ -88,7 +88,7 @@ public class Reality implements RectArgsController {
         this.vJ = vJ;
     }
 
-    int ground = 500;//地面高度
+    int ground = 400;//地面高度
 
     @Override
     public void updateControllable(RectSprite sprite, boolean... signals) {
@@ -167,7 +167,16 @@ public class Reality implements RectArgsController {
             sprite.setY(ground - sprite.getHeight());
     }
 
-    public static void updateAllColliders(RectUnit... rectUnits) {
+    /**
+     * 更新所有碰撞单位的参数。
+     * <b>注意：可能会存在数据溢出的情况！</b>
+     *
+     * @param speed     防穿模临界相对速度，大于该速度才会触发x方向的防穿模机制
+     * @param btDx      x方向上的防穿模距离
+     * @param btDy      y方向上的防穿模距离
+     * @param rectUnits 碰撞单位
+     */
+    public static void updateAllColliders(double speed, double btDx, double btDy, RectUnit... rectUnits) {
         int len = rectUnits.length;
         for (int i = 0; i < len; i++) {
             RectUnit self = rectUnits[i];
@@ -183,24 +192,53 @@ public class Reality implements RectArgsController {
                                 s.setCollider(a);
                                 break;
                             }
-                        } else if (CollideTest.isColliding(s, sCollider)) {//精灵和精灵相交
+                        } else if (CollideTest.isColliding(s, sCollider)) {//精灵和精灵相交，防止穿模
+                            double sx = s.getExactX(), sCx = sCollider.getExactX();
+                            double sy = s.getExactY(), sCy = sCollider.getExactY();
+                            double tmp;
+                            //相对速度
+                            if (Math.abs(s.getVx() - sCollider.getVx()) > speed)
+                                if (sx < sCx) {
+                                    if ((tmp = s.getDiagonalX() - sCx) > 0 && tmp < btDx)
+                                        while (s.getDiagonalX() > sCollider.getExactX()) {
+                                            s.setX(s.getExactX() - 1);
+                                            sCollider.setX(sCollider.getExactX() + 1);
+                                        }
+                                } else {
+                                    if ((tmp = sCollider.getDiagonalX() - sx) > 0 && tmp < btDx)
+                                        while (sCollider.getDiagonalX() > s.getExactX()) {
+                                            s.setX(s.getExactX() + 1);
+                                            sCollider.setX(sCollider.getExactX() - 1);
+                                        }
+                                }
+                            if (sy < sCy) {
+                                if (s.getDiagonalY() - sCy < btDy)
+                                    s.setY(sCy - s.getHeight());
+                            } else {
+                                if (sCollider.getDiagonalY() - sy < btDy)
+                                    sCollider.setY(sy - sCollider.getHeight());
+                            }
                             break;
                         } else
                             s.setCollider(null);
                     } else if (CollideTest.isColliding(s, another))//精灵和固定物碰撞检测
-                        s.setVxAndVy(-s.getVx(), -s.getVy());
+                        s.setVxAndVy(-s.getVx(), -s.getVy());//弹性碰撞
                 }
-            } else
-                for (int j = i + 1; j < len; j++)
-                    if (rectUnits[j] instanceof RectSprite a &&
-                            CollideTest.isColliding(self, a))//固定物和精灵碰撞检测
-                        a.setVxAndVy(-a.getVx(), -a.getVy());
+            }
+//            else
+//                for (int j = i + 1; j < len; j++)
+//                    if (rectUnits[j] instanceof RectSprite a &&
+//                            CollideTest.isColliding(self, a)) {//固定物和精灵碰撞检测
+//                        a.setVxAndVy(-a.getVx(), -a.getVy() / 2);//非弹性碰撞（能量损耗）
+//                        if (a.getDiagonalY() > self.getExactY())
+//                            a.setY(a.getExactY() - 0.8);
+//                    }
         }
     }
 
     /**
-     * 更新物体碰撞后的速度。
-     * <b>注意：可能会存在数据溢出的情况！</b>
+     * 更新物体 <i>弹性碰撞</i> 后的速度。<i>弹性碰撞：即不考虑能量损耗。</i>
+     * <br><b>注意：可能会存在数据溢出的情况！</b></br>
      *
      * @param s1  精灵1
      * @param s2  精灵2
@@ -220,8 +258,8 @@ public class Reality implements RectArgsController {
     }
 
     /**
-     * 更新物体在流体中的速度（x方向）。
-     * <b>注意：可能会存在数据溢出的情况（几乎不会）！</b>
+     * 更新物体 <i>在流体中</i> 的速度（x方向）。
+     * <br><b>注意：可能会存在数据溢出的情况（几乎不会）！</b></br>
      *
      * @param sprite 受流体阻力影响的对象
      * @param c      阻力系数
@@ -238,8 +276,8 @@ public class Reality implements RectArgsController {
     }
 
     /**
-     * 更新物体在流体中的速度（y方向）。
-     * <b>注意：可能会存在数据溢出的情况（几乎不会）！</b>
+     * 更新物体 <i>在流体中</i> 的速度（y方向）。
+     * <br><b>注意：可能会存在数据溢出的情况（几乎不会）！</b></br>
      *
      * @param sprite 受流体阻力影响的对象
      * @param c      阻力系数
