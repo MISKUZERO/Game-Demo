@@ -121,9 +121,9 @@ public class Reality implements RectArgsController {
         sprite.setX(sprite.getExactX() + sprite.getVx() * dT);//  **更新x方向位置**
         //2.更新y方向上速度和位置
         if (land) {
-            if (jump)
+            if (jump) {
                 sprite.setVy(vJ);
-            else
+            } else
                 sprite.setVy(0);
         } else {
             sprite.setVy(sprite.getVy() + g * dT);
@@ -163,7 +163,7 @@ public class Reality implements RectArgsController {
 
     /**
      * 更新所有碰撞单位的参数。
-     * <b>注意：可能会存在数据溢出的情况！</b>
+     * <b>注意：RectUnit 单位必须在 RectSprite 的前方（索引位置）！并且可能会存在数据溢出的情况！</b>
      *
      * @param speed     防穿模临界相对速度，大于该速度才会触发x方向的防穿模机制
      * @param btdX      x方向上的防穿模距离
@@ -175,18 +175,21 @@ public class Reality implements RectArgsController {
         for (int i = 0; i < len; i++) {
             RectUnit self = rectUnits[i];
             if (self instanceof RectSprite s) {
+                boolean collide = false;
                 for (int j = i + 1; j < len; j++) {
                     RectUnit another = rectUnits[j];
                     if (another instanceof RectSprite a) {//精灵和精灵碰撞检测
                         RectSprite sCollider = s.getCollider();
                         if (sCollider == null) {
                             if (CollideTest.isColliding(s, a)) {
+                                collide = true;
                                 updateVxAndVyAfterCollide(s, a, s.getM(), a.getM(),
                                         s.getVx(), a.getVx(), s.getVy(), a.getVy());
                                 s.setCollider(a);
                                 break;
                             }
                         } else if (CollideTest.isColliding(s, sCollider)) {//精灵和精灵相交，防止穿模和着陆判定
+                            collide = true;
                             double sx = s.getExactX(), sCx = sCollider.getExactX();
                             double sy = s.getExactY(), sCy = sCollider.getExactY();
                             double tmp;
@@ -210,63 +213,55 @@ public class Reality implements RectArgsController {
                             if (sy < sCy) {
                                 if (s.getDiagonalY() - sCy < btdY) {//s在sCollider的上方
                                     s.setY(sCy - s.getHeight());
-                                    s.setVy(sCollider.getVy());
                                     s.setLand(sCollider.isLand());//着陆标志位向上传递
                                 }
                             } else {
                                 if (sCollider.getDiagonalY() - sy < btdY) {//sCollider在s的上方
                                     sCollider.setY(sy - sCollider.getHeight());
-                                    sCollider.setVy(s.getVy());
                                     sCollider.setLand(s.isLand());//着陆标志位向上传递
                                 }
                             }
                             break;
                         } else
                             s.setCollider(null);
-                    } else if (CollideTest.isColliding(s, another)) //精灵和固定物碰撞检测
-                        System.err.println("精灵和固定物碰撞检测！");
-                }
-            } else
-                for (int j = i + 1; j < len; j++)
-                    if (rectUnits[j] instanceof RectSprite a) {
-                        if (CollideTest.isColliding(self, a)) {//固定物和精灵碰撞检测
-                            double ax = a.getExactX(), sx = self.getExactX();
-                            double ay = a.getExactY(), sy = self.getExactY();
-                            //1.更新速度
-                            //x方向
-                            if (Math.abs(self.getDiagonalX() - a.getExactX()) < btdX ||
-                                    Math.abs(a.getDiagonalX() - self.getExactX()) < btdX)//固定物的左右表面碰撞处理
-                                a.setVx(-a.getVx());
-                            //y方向
-                            if (Math.abs(a.getDiagonalY() - sy) < btdY ||
-                                    Math.abs(self.getDiagonalY() - ay) < btdY)//固定物的上下表面碰撞处理
-                                a.setVy(-a.getVy() / 2);//非弹性碰撞（能量损耗）
-                            //2.防穿模处理
-                            //x方向的处理
-                            double tmp;
-                            if (ax < sx) {
-                                if ((tmp = a.getDiagonalX() - sx) > 0 && tmp < btdX)//a在self的左边
-                                    a.setX(self.getExactX() - a.getWidth());
-                            } else {
-                                if ((tmp = self.getDiagonalX() - ax) > 0 && tmp < btdX)//a在self的右边
-                                    a.setX(self.getDiagonalX());
+                    } else if (CollideTest.isColliding(s, another)) {//精灵和固定物碰撞检测
+                        collide = true;
+                        double sx = s.getExactX(), ax = another.getExactX();
+                        double sy = s.getExactY(), ay = another.getExactY();
+                        //1.更新速度
+                        //x方向
+                        double vx = s.getVx();
+                        if ((Math.abs(another.getDiagonalX() - s.getExactX()) < btdX && vx < 0) ||
+                                (Math.abs(s.getDiagonalX() - another.getExactX()) < btdX && vx > 0))//固定物的左右表面碰撞处理
+                            s.setVx(-s.getVx());
+                        //y方向
+                        if (Math.abs(s.getDiagonalY() - ay) < btdY ||
+                                Math.abs(another.getDiagonalY() - sy) < btdY)//固定物的上下表面碰撞处理
+                            s.setVy(-s.getVy() / 2);//非弹性碰撞（能量损耗）
+                        //2.防穿模处理
+                        //x方向的处理
+                        double tmp;
+                        if (sx < ax) {
+                            if ((tmp = s.getDiagonalX() - ax) > 0 && tmp < btdX)
+                                s.setX(another.getExactX() - s.getWidth());
+                        } else {
+                            if ((tmp = another.getDiagonalX() - sx) > 0 && tmp < btdX)
+                                s.setX(another.getDiagonalX());
+                        }
+                        //y方向的处理
+                        if (sy < ay) {
+                            if (s.getDiagonalY() - ay < btdY) {
+                                s.setY(ay - s.getHeight());
+                                s.setVy(0);
+                                s.setLand(true);//  **着陆标志位的传递源**
                             }
-                            //y方向的处理
-                            if (ay < sy) {
-                                if (a.getDiagonalY() - sy < btdY) {//a在self的上方
-                                    a.setY(sy - a.getHeight());
-                                    a.setVy(0);
-                                    a.setLand(true);//  **着陆标志位的传递源**
-                                }
-                            } else {
-                                if (self.getDiagonalY() - ay < btdY){//a在self的下方
-                                    a.setY(self.getDiagonalY());
-                                    a.setLand(false);
-                                }
-                            }
-                        } else
-                            a.setLand(false);
+                        } else if (another.getDiagonalY() - sy < btdY)
+                            s.setY(another.getDiagonalY());
                     }
+                }
+                if (!collide)
+                    s.setLand(false);
+            }
         }
     }
 

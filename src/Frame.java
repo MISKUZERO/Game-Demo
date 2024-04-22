@@ -5,8 +5,6 @@ import controller.Reality;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedList;
 
 public class Frame extends JPanel {
@@ -92,12 +90,12 @@ public class Frame extends JPanel {
             final RectSprite sprite3 = this.sprite3;
             final LinkedList<RectUnit> units = this.units;
             final Reality reality = this.reality;
-            units.add(ground);
-            units.add(hero);
+            units.add(hero);//索引0
             units.add(sprite1);
             units.add(sprite2);
             units.add(sprite3);
-            int spritesIndex = 1;
+            units.add(ground);
+            int unitIndex = 4;
             int t = 0;
             int dT = 10;
             while (true) {
@@ -107,43 +105,45 @@ public class Frame extends JPanel {
                     int x = this.x, y = this.y;
                     if (x0 < x)
                         if (y0 < y)
-                            units.add(spritesIndex++, new RectUnit(x0, y0, x - x0, y - y0) {
+                            units.add(new RectUnit(x0, y0, x - x0, y - y0) {
                             });
                         else
-                            units.add(spritesIndex++, new RectUnit(x0, y, x - x0, y0 - y) {
+                            units.add(new RectUnit(x0, y, x - x0, y0 - y) {
                             });
                     else if (y0 < y)
-                        units.add(spritesIndex++, new RectUnit(x, y0, x0 - x, y - y0) {
+                        units.add(new RectUnit(x, y0, x0 - x, y - y0) {
                         });
                     else
-                        units.add(spritesIndex++, new RectUnit(x, y, x0 - x, y0 - y) {
+                        units.add(new RectUnit(x, y, x0 - x, y0 - y) {
                         });
                     create = false;
                 } else if (shoot) {
-                    shoot(hero, units, reality, 5, 5, 1, 100);
+                    shoot(hero, units, 4, reality, 5, 5, 1, 100);
+                    unitIndex++;
                     shoot = false;
-                } else if (burst && t++ % dT == 0)
-                    shoot(hero, units, reality, 2, 2, 0.5, 50);
+                } else if (burst && t++ % dT == 0) {
+                    shoot(hero, units, 4, reality, 2, 2, 0.5, 50);
+                    unitIndex++;
+                }
                 //精灵参数更新
                 reality.updateControllable(hero, lMove, rMove, jump);
-                int len = units.size();
-                for (int i = spritesIndex + 1; i < len; i++)
+                for (int i = 1; i < unitIndex; i++)
                     reality.updateUncontrollable((RectSprite) units.get(i));
                 Reality.updateAllColliders(20, 5, 5, units.toArray(new RectUnit[0]));
                 if (units.size() > 1000)
-                    units.remove(spritesIndex + 4);
+                    units.remove(4);
                 render();
             }
         }).start();
     }
 
-    private void shoot(RectSprite hero, LinkedList<RectUnit> units, Reality reality, int width, int height, double m, int speed) {
+    private void shoot(RectSprite hero, LinkedList<RectUnit> units, int index, Reality reality, int width, int height, double m, int speed) {
         double x = hero.getExactX();
         double y = hero.getExactY();
         RectSprite b = new RectSprite(x, y - 20, width, height, m) {
         };
         b.setVxAndVy(speed * (this.x - x), speed * (this.y - y));
-        units.add(b);
+        units.add(index, b);
         reality.updateUncontrollable(b);
     }
 
