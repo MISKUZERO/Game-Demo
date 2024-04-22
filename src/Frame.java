@@ -79,27 +79,27 @@ public class Frame extends JPanel {
             units.add(sprite2);
             units.add(sprite3);
             int t = 0;
-            int dT = 5;
+            int dT = 10;
             while (true) {
                 if (shoot) {
-                    shoot(64, hero, units, reality);
+                    shoot(hero, units, reality, 5, 5, 1, 100);
                     shoot = false;
                 }
                 if (burst && t++ % dT == 0)
-                    shoot(32, hero, units, reality);
+                    shoot(hero, units, reality, 2, 2, 0.5, 50);
                 reality.updateControllable(hero, lMove, rMove, jump);
                 for (int i = 2; i < units.size(); i++)
                     reality.updateUncontrollable((RectSprite) units.get(i));
-                Reality.updateAllColliders(20, 5, 5, units.toArray(new RectUnit[0]));
+                Reality.updateAllColliders(20, 5, 50, units.toArray(new RectUnit[0]));
                 render();
             }
         }).start();
     }
 
-    private void shoot(int speed, RectSprite hero, LinkedList<RectUnit> units, Reality reality) {
+    private void shoot(RectSprite hero, LinkedList<RectUnit> units, Reality reality, int width, int height, double m, int speed) {
         double x = hero.getExactX();
         double y = hero.getExactY();
-        RectSprite b = new RectSprite(x, y - 20, 5, 5, 1) {
+        RectSprite b = new RectSprite(x, y - 20, width, height, m) {
         };
         b.setVxAndVy(speed * (this.x - x), speed * (this.y - y));
         units.add(b);
