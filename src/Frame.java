@@ -129,7 +129,9 @@ public class Frame extends JPanel {
                 int len = units.size();
                 for (int i = spritesIndex + 1; i < len; i++)
                     reality.updateUncontrollable((RectSprite) units.get(i));
-                Reality.updateAllColliders(20, 5, 50, units.toArray(new RectUnit[0]));
+                Reality.updateAllColliders(20, 5, 5, units.toArray(new RectUnit[0]));
+                if (units.size() > 1000)
+                    units.remove(spritesIndex + 4);
                 render();
             }
         }).start();
