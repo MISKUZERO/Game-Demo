@@ -5,6 +5,8 @@ import controller.Reality;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 
 public class Frame extends JPanel {
@@ -17,15 +19,19 @@ public class Frame extends JPanel {
     private final RectSprite sprite1;
     private final RectSprite sprite2;
     private final RectSprite sprite3;
-    private final LinkedList<RectUnit> sprites;
+    private final LinkedList<RectUnit> units;
 
     private volatile boolean lMove;
     private volatile boolean rMove;
     private volatile boolean jump;
     private volatile boolean shoot;
     private volatile boolean burst;
-    private volatile double x;
-    private volatile double y;
+    private volatile boolean create;
+    private volatile boolean ctlAndB2Mask;
+    private volatile int x0;
+    private volatile int y0;
+    private volatile int x;
+    private volatile int y;
 
     private final Reality reality;
 
@@ -38,8 +44,21 @@ public class Frame extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(Color.BLACK);
-        for (RectUnit rectUnit : sprites)
-            drawUnitBox(g, rectUnit);
+        if (ctlAndB2Mask) {
+            int x0 = this.x0, y0 = this.y0;
+            int x = this.x, y = this.y;
+            if (x0 < x)
+                if (y0 < y)
+                    g.drawRect(x0, y0, x - x0, y - y0);
+                else
+                    g.drawRect(x0, y, x - x0, y0 - y);
+            else if (y0 < y)
+                g.drawRect(x, y0, x0 - x, y - y0);
+            else
+                g.drawRect(x, y, x0 - x, y0 - y);
+        }
+        for (RectUnit unit : units)
+            drawUnitBox(g, unit);
     }
 
     public Frame() {
@@ -55,7 +74,7 @@ public class Frame extends JPanel {
         };
         sprite3 = new RectSprite(500, 0, 10, 35, 5) {
         };
-        sprites = new LinkedList<>();
+        units = new LinkedList<>();
         reality = new Reality();
     }
 
@@ -71,24 +90,44 @@ public class Frame extends JPanel {
             final RectSprite sprite1 = this.sprite1;
             final RectSprite sprite2 = this.sprite2;
             final RectSprite sprite3 = this.sprite3;
-            final LinkedList<RectUnit> units = this.sprites;
+            final LinkedList<RectUnit> units = this.units;
             final Reality reality = this.reality;
             units.add(ground);
             units.add(hero);
             units.add(sprite1);
             units.add(sprite2);
             units.add(sprite3);
+            int spritesIndex = 1;
             int t = 0;
             int dT = 10;
             while (true) {
-                if (shoot) {
+                //鼠标检测
+                if (create) {
+                    int x0 = this.x0, y0 = this.y0;
+                    int x = this.x, y = this.y;
+                    if (x0 < x)
+                        if (y0 < y)
+                            units.add(spritesIndex++, new RectUnit(x0, y0, x - x0, y - y0) {
+                            });
+                        else
+                            units.add(spritesIndex++, new RectUnit(x0, y, x - x0, y0 - y) {
+                            });
+                    else if (y0 < y)
+                        units.add(spritesIndex++, new RectUnit(x, y0, x0 - x, y - y0) {
+                        });
+                    else
+                        units.add(spritesIndex++, new RectUnit(x, y, x0 - x, y0 - y) {
+                        });
+                    create = false;
+                } else if (shoot) {
                     shoot(hero, units, reality, 5, 5, 1, 100);
                     shoot = false;
-                }
-                if (burst && t++ % dT == 0)
+                } else if (burst && t++ % dT == 0)
                     shoot(hero, units, reality, 2, 2, 0.5, 50);
+                //精灵参数更新
                 reality.updateControllable(hero, lMove, rMove, jump);
-                for (int i = 2; i < units.size(); i++)
+                int len = units.size();
+                for (int i = spritesIndex + 1; i < len; i++)
                     reality.updateUncontrollable((RectSprite) units.get(i));
                 Reality.updateAllColliders(20, 5, 50, units.toArray(new RectUnit[0]));
                 render();
@@ -140,6 +179,12 @@ public class Frame extends JPanel {
                     x = e.getX();
                     y = e.getY();
                     burst = true;
+                } else if (modifiersEx == 4224) {//Ctrl+右键
+                    x0 = e.getX();
+                    y0 = e.getY();
+                    x = e.getX();
+                    y = e.getY();
+                    ctlAndB2Mask = true;
                 }
 
             }
@@ -149,6 +194,10 @@ public class Frame extends JPanel {
                 int modifiers = e.getModifiers();
                 if (modifiers == 4)
                     burst = false;
+                else if (ctlAndB2Mask) {
+                    create = true;
+                    ctlAndB2Mask = false;
+                }
             }
         });
         frame.addKeyListener(new KeyAdapter() {
