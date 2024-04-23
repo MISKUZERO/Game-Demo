@@ -88,21 +88,22 @@ public class Frame extends JPanel {
             final RectSprite sprite1 = this.sprite1;
             final RectSprite sprite2 = this.sprite2;
             final RectSprite sprite3 = this.sprite3;
-            final LinkedList<RectUnit> units = this.units;
             final Reality reality = this.reality;
-            units.add(hero);//索引0
-            units.add(sprite1);
-            units.add(sprite2);
-            units.add(sprite3);
-            units.add(ground);
+            final LinkedList<RectUnit> units = this.units;
+            final int unitsMaxCount = 600;
+            final int opIndex = 4;
             int unitIndex = 4;
             int t = 0;
             int dT = 10;
+            units.add(hero);//索引0
+            units.add(sprite1);//索引1
+            units.add(sprite2);//索引2
+            units.add(sprite3);//索引3
+            units.add(ground);
             while (true) {
                 //鼠标检测
                 if (create) {
-                    int x0 = this.x0, y0 = this.y0;
-                    int x = this.x, y = this.y;
+                    int x0 = this.x0, y0 = this.y0, x = this.x, y = this.y;
                     if (x0 < x)
                         if (y0 < y)
                             units.add(new RectUnit(x0, y0, x - x0, y - y0) {
@@ -118,11 +119,11 @@ public class Frame extends JPanel {
                         });
                     create = false;
                 } else if (shoot) {
-                    shoot(hero, units, 4, reality, 5, 5, 1, 100);
+                    shoot(hero, units, opIndex, reality, 5, 5, 1, 100);
                     unitIndex++;
                     shoot = false;
                 } else if (burst && t++ % dT == 0) {
-                    shoot(hero, units, 4, reality, 2, 2, 0.5, 50);
+                    shoot(hero, units, opIndex, reality, 2, 2, 0.5, 50);
                     unitIndex++;
                 }
                 //精灵参数更新
@@ -130,8 +131,9 @@ public class Frame extends JPanel {
                 for (int i = 1; i < unitIndex; i++)
                     reality.updateUncontrollable((RectSprite) units.get(i));
                 Reality.updateAllColliders(20, 5, 5, units.toArray(new RectUnit[0]));
-                if (units.size() > 1000)
-                    units.remove(4);
+                //优化
+                if (units.size() > unitsMaxCount)
+                    units.remove(--unitIndex);
                 render();
             }
         }).start();
@@ -194,11 +196,12 @@ public class Frame extends JPanel {
             @Override
             public void mouseReleased(MouseEvent e) {
                 int modifiers = e.getModifiers();
-                if (modifiers == 4)
+                if (modifiers == 4 || modifiers == 6) {
                     burst = false;
-                else if (ctlAndB2Mask) {
-                    create = true;
-                    ctlAndB2Mask = false;
+                    if (ctlAndB2Mask) {
+                        create = true;
+                        ctlAndB2Mask = false;
+                    }
                 }
             }
         });

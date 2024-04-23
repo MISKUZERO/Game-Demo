@@ -178,17 +178,16 @@ public class Reality implements RectArgsController {
                 boolean collide = false;
                 for (int j = i + 1; j < len; j++) {
                     RectUnit another = rectUnits[j];
-                    if (another instanceof RectSprite a) {//精灵和精灵碰撞检测
+                    if (another instanceof RectSprite a) {
                         RectSprite sCollider = s.getCollider();
                         if (sCollider == null) {
-                            if (CollideTest.isColliding(s, a)) {
+                            if (CollideTest.doubleRectUnit(s, a)) {
                                 collide = true;
                                 updateVxAndVyAfterCollide(s, a, s.getM(), a.getM(),
                                         s.getVx(), a.getVx(), s.getVy(), a.getVy());
                                 s.setCollider(a);
-                                break;
                             }
-                        } else if (CollideTest.isColliding(s, sCollider)) {//精灵和精灵相交，防止穿模和着陆判定
+                        } else if (CollideTest.doubleRectUnit(s, sCollider)) {//                   ** 精灵 和 精灵 碰撞 **
                             collide = true;
                             double sx = s.getExactX(), sCx = sCollider.getExactX();
                             double sy = s.getExactY(), sCy = sCollider.getExactY();
@@ -211,56 +210,55 @@ public class Reality implements RectArgsController {
                                 }
                             //2.y方向的处理
                             if (sy < sCy) {
-                                if (s.getDiagonalY() - sCy < btdY) {//s在sCollider的上方
+                                if ((tmp = s.getDiagonalY() - sCy) > 0 && tmp < btdY) {//s在sCollider的上方
                                     s.setY(sCy - s.getHeight());
                                     s.setLand(sCollider.isLand());//着陆标志位向上传递
                                 }
                             } else {
-                                if (sCollider.getDiagonalY() - sy < btdY) {//sCollider在s的上方
+                                if ((tmp = sCollider.getDiagonalY() - sy) > 0 && tmp < btdY) {//sCollider在s的上方
                                     sCollider.setY(sy - sCollider.getHeight());
                                     sCollider.setLand(s.isLand());//着陆标志位向上传递
                                 }
                             }
-                            break;
                         } else
                             s.setCollider(null);
-                    } else if (CollideTest.isColliding(s, another)) {//精灵和固定物碰撞检测
+                    } else if (CollideTest.doubleRectUnit(s, another)) {//                       ** 精灵 和 固定物 碰撞 **
                         collide = true;
-                        double sx = s.getExactX(), ax = another.getExactX();
-                        double sy = s.getExactY(), ay = another.getExactY();
-                        //1.更新速度
-                        //x方向
-                        double vx = s.getVx();
-                        if ((Math.abs(another.getDiagonalX() - s.getExactX()) < btdX && vx < 0) ||
-                                (Math.abs(s.getDiagonalX() - another.getExactX()) < btdX && vx > 0))//固定物的左右表面碰撞处理
-                            s.setVx(-s.getVx());
-                        //y方向
-                        if (Math.abs(s.getDiagonalY() - ay) < btdY ||
-                                Math.abs(another.getDiagonalY() - sy) < btdY)//固定物的上下表面碰撞处理
-                            s.setVy(-s.getVy() / 2);//非弹性碰撞（能量损耗）
-                        //2.防穿模处理
-                        //x方向的处理
                         double tmp;
-                        if (sx < ax) {
-                            if ((tmp = s.getDiagonalX() - ax) > 0 && tmp < btdX)
-                                s.setX(another.getExactX() - s.getWidth());
-                        } else {
-                            if ((tmp = another.getDiagonalX() - sx) > 0 && tmp < btdX)
-                                s.setX(another.getDiagonalX());
-                        }
-                        //y方向的处理
-                        if (sy < ay) {
-                            if (s.getDiagonalY() - ay < btdY) {
-                                s.setY(ay - s.getHeight());
-                                s.setVy(0);
-                                s.setLand(true);//  **着陆标志位的传递源**
+                        //x方向
+                        if (another.getExactY() + btdY < s.getDiagonalY() &&
+                                s.getExactY() < another.getDiagonalY() - btdY) {//碰撞发生在左右面
+                            s.setVx(-s.getVx());//更新速度
+                            //防穿模处理
+                            if (s.getExactX() < another.getExactX()) {//s -> a
+                                if ((tmp = s.getDiagonalX() - another.getExactX()) > 0)
+                                    if (tmp < btdX) s.setX(another.getExactX() - s.getWidth());
+                            } else {//a <- s
+                                if ((tmp = another.getDiagonalX() - s.getExactX()) > 0)
+                                    if (tmp < btdX) s.setX(another.getDiagonalX());
                             }
-                        } else if (another.getDiagonalY() - sy < btdY)
-                            s.setY(another.getDiagonalY());
+                        }
+                        //y方向
+                        if (another.getExactX() + btdX < s.getDiagonalX() &&
+                                s.getExactX() < another.getDiagonalX() - btdX) {//碰撞发生在上下面
+                            s.setVy(-s.getVy() / 2);//更新速度（能量损耗）// TODO: 2024/4/23 为什么弹跳会持续没完没了？
+                            //防穿模处理
+                            if (s.getExactY() < another.getExactY()) {//s -> a
+                                if ((tmp = s.getDiagonalY() - another.getExactY()) > 0)
+                                    if (tmp < btdY) {
+                                        s.setY(another.getExactY() - s.getHeight());
+                                        s.setLand(true);//着陆标志位的传递源！
+                                        // TODO: 2024/4/23 设置着陆标志位后Vy速度会被设置为0，则不能在地上弹起如何解决？
+                                    }
+                            } else {//a <- s
+                                if ((tmp = another.getDiagonalY() - s.getExactY()) > 0)
+                                    if (tmp < btdY) s.setY(another.getDiagonalY());
+                            }
+                        }
                     }
                 }
                 if (!collide)
-                    s.setLand(false);
+                    s.setLand(false);// TODO: 2024/4/23 如何设置两个在空中相互碰撞单位标志位？bug：两个碰撞单位悬空
             }
         }
     }
